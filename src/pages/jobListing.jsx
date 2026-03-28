@@ -1,0 +1,195 @@
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { State, City } from "country-state-city";
+import { BarLoader } from "react-spinners";
+import useFetch from "@/hooks/use-fetch";
+
+import JobCard from "@/components/job-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { getCompanies } from "@/api/apiCompanies";
+import { getJobs } from "@/api/apiJobs";
+
+const JobListing = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [company_id, setCompany_id] = useState("");
+  const [selectedState, setSelectedState] = useState(""); // store state name
+  const [selectedCity, setSelectedCity] = useState("");   // store city name
+
+  const { isLoaded } = useUser();
+
+  const {
+    data: companies,
+    fn: fnCompanies,
+  } = useFetch(getCompanies);
+
+  const {
+    loading: loadingJobs,
+    data: jobs,
+    fn: fnJobs,
+  } = useFetch(getJobs, {
+    state: selectedState,   // ✅ pass state name
+    city: selectedCity,     // ✅ pass city name
+    company_id,
+    searchQuery,
+  });
+
+  // ✅ Fetch companies (no need to filter by state/city here unless required)
+  useEffect(() => {
+    if (isLoaded) {
+      fnCompanies();
+    }
+  }, [isLoaded]);
+
+  // ✅ Fetch jobs when filters change
+  useEffect(() => {
+    if (isLoaded) fnJobs();
+  }, [isLoaded, selectedState, selectedCity, company_id, searchQuery]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    let formData = new FormData(e.target);
+    const query = formData.get("search-query");
+    setSearchQuery(query || "");
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setCompany_id("");
+    setSelectedState("");
+    setSelectedCity("");
+  };
+
+  if (!isLoaded) {
+    return <BarLoader className="mb-4" width={"100%"} color="#36d7b7" />;
+  }
+
+  return (
+    <div className="animate-fade-in-up">
+      <h1 className="gradient-title font-extrabold text-6xl sm:text-7xl text-center pb-8">
+        Latest Jobs
+      </h1>
+      <form
+        onSubmit={handleSearch}
+        className="h-14 flex flex-row w-full gap-2 items-center mb-8 glass-card p-2 rounded-xl"
+      >
+        <Input
+          type="text"
+          placeholder="Search Jobs by Title.."
+          name="search-query"
+          className="h-full flex-1 px-4 text-md bg-transparent border-none focus-visible:ring-0"
+        />
+        <Button type="submit" className="h-full sm:w-28 interactive-element" variant="blue">
+          Search
+        </Button>
+      </form>
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        {/* ✅ State Dropdown */}
+        <Select
+          value={selectedState}
+          onValueChange={(value) => {
+            setSelectedState(value);
+            setSelectedCity(""); // reset city when state changes
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by State" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {State.getStatesOfCountry("IN").map(({ name }) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* ✅ City Dropdown */}
+        <Select
+          value={selectedCity}
+          onValueChange={(value) => setSelectedCity(value)}
+          disabled={!selectedState}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by City" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {selectedState &&
+                City.getCitiesOfState(
+                  "IN",
+                  State.getStatesOfCountry("IN").find(s => s.name === selectedState)?.isoCode
+                )?.map(({ name }) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* ✅ Company Dropdown */}
+        <Select
+          value={company_id}
+          onValueChange={(value) => setCompany_id(value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by Company" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {companies?.map(({ name, id }) => (
+                <SelectItem key={id} value={id}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* Clear Filters Button */}
+        <Button
+          className="sm:w-1/2"
+          variant="destructive"
+          onClick={clearFilters}
+        >
+          Clear Filters
+        </Button>
+      </div>
+
+      {loadingJobs && (
+        <BarLoader className="mt-4" width={"100%"} color="#36d7b7" />
+      )}
+
+      {!loadingJobs && (
+        <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {jobs?.length ? (
+            jobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                savedInit={job?.saved?.length > 0}
+              />
+            ))
+          ) : (
+            <div>No Jobs Found 😢</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default JobListing;

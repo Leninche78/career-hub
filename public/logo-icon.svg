@@ -1,0 +1,14 @@
+<svg viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(65, 65) scale(1)">
+    <!-- Outer Magnifying Glass -->
+    <circle cx="0" cy="0" r="45" stroke="#005A9C" stroke-width="12" />
+    <line x1="30" y1="30" x2="60" y2="60" stroke="#005A9C" stroke-width="16" stroke-linecap="round" />
+    
+    <!-- Orange Triangle/Pie shape inside -->
+    <path d="M -20 -10 L 25 -10 L 10 35 Z" fill="#F26522" />
+    
+    <!-- Blue Zig-Zag Arrow -->
+    <path d="M -30 10 L -10 -15 L 10 0 L 45 -45" fill="none" stroke="#008FD3" stroke-width="10" stroke-linejoin="miter" />
+    <polygon points="35,-45 55,-45 45,-25" fill="#008FD3" transform="rotate(-30 45 -45)" />
+  </g>
+</svg>
