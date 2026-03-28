@@ -13,7 +13,7 @@ import SavedJobs from "./pages/saved-jobs";
 import JobPage from "./pages/job";
 
 import "./App.css";
-
+//update
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
